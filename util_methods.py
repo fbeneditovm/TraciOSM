@@ -1,5 +1,8 @@
-from math import ceil
-import xml.etree.ElementTree as ET
+"""
+-----------------------------------------------------------------------------------------------------------------------
+This file contains some functions that may be useful to multiple applications that use the SUMO, traci and mobcons
+-----------------------------------------------------------------------------------------------------------------------
+"""
 
 
 def set_lists(vehicle_list=[], edge_list=[], point_list=[], route_files=["osm.bus.rou.xml"], net_file="osm.net.xml"):
@@ -12,6 +15,8 @@ def set_lists(vehicle_list=[], edge_list=[], point_list=[], route_files=["osm.bu
     :param net_file: a list with *.net.xml files
     :return: None
     """
+    import xml.etree.ElementTree as ET
+
     for route_file in route_files:
         # We are accessing this xml as a tree structure
         xml_file = ET.parse(route_file)
@@ -35,6 +40,8 @@ def get_xy_from_point(point_list, point_id):
     :param point_id: the id of the point
     :return: a float tuple in the format (x, y)
     """
+    import xml.etree.ElementTree as ET
+
     for point in point_list:
         if point.get("id") == point_id:
             xy = (float(point.get("x")), float(point.get("y")))
@@ -49,6 +56,9 @@ def edge_to_xy_list(edge_list, point_list, edge_id):
     :param edge_id: the id of the edge
     :return: a list of float tuples each in the format (x, y)
     """
+    import xml.etree.ElementTree as ET
+    from math import ceil
+
     xy_list = []
     for edge in edge_list:
         if edge.get("id") == edge_id:
@@ -89,6 +99,8 @@ def generate_route_dict(vehicle_list=None, edge_list=None, point_list=None):
     :param point_list: a list with all the points (generated using the set_lists function)
     :return: a Python dict
     """
+    import xml.etree.ElementTree as ET
+
     # Setting the lists if they are not set
     if vehicle_list is None:
         if edge_list is None:
@@ -129,5 +141,74 @@ def generate_route_dict(vehicle_list=None, edge_list=None, point_list=None):
             route_dict[vehicle.get("id")] = {"edges": route_edges, "xy": []}
             for edge in route_edges:
                 route_dict[vehicle.get("id")]["xy"] += edge_to_xy_list(edge_list, point_list, edge)
+
+    return route_dict
+
+
+def export_route_dict_to_mobcons_path(route_dict=None):
+    """
+    Export a route dict to mobcons compatible paths
+    :param route_dict: a route dict (generated using the generate_route_dict function)
+    :return: a list of strings, each containing a mobcons compatible path
+    """
+
+    if route_dict is None:
+        route_dict = generate_route_dict()
+
+    paths = []
+    for vehicle_id in route_dict:
+        line = vehicle_id+"="
+        for xy in route_dict[vehicle_id]["xy"]:
+            line += str(xy[0]) + "," + str(xy[1]) + " "
+            if len(line) > len(vehicle_id + "="):  # If there is an actual route
+                line = line[:-1] + "\n"  # Remove the last space and add a line break
+                paths.append(line)
+    return paths
+
+
+def save_route_dict_to_json_file(route_dict, json_file, close_after=False):
+    """
+    Saves a route dict to a json file.
+    :param route_dict: the route dict
+    :param json_file: a file or a path to a file where the route dict will be saved
+    :param close_after: a boolean to state if the file should be closed after finishing
+    :return: None
+    """
+
+    import json
+
+    if isinstance(json_file, str):
+        file = open(json_file, "w")
+        close_after = True
+    else:
+        file = json_file
+
+    json_obj = json.dumps(dict)
+    file.write(json_obj)
+
+    if close_after:
+        file.close()
+
+
+def load_route_dict_from_json_file(json_file, close_after=False):
+    """
+    Loads a route dict from a json file.
+    :param json_file: a file or a path to a file where the route dict is saved
+    :param close_after: a boolean to state if the file should be closed after finishing
+    :return: a route dict
+    """
+
+    import json
+
+    if isinstance(json_file, str):
+        file = open(json_file, "r")
+        close_after = True
+    else:
+        file = json_file
+
+    route_dict = json.loads(file.read())
+
+    if close_after:
+        file.close()
 
     return route_dict
