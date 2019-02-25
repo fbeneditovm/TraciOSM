@@ -160,9 +160,9 @@ def export_route_dict_to_mobcons_path(route_dict=None):
         line = vehicle_id+"="
         for xy in route_dict[vehicle_id]["xy"]:
             line += str(xy[0]) + "," + str(xy[1]) + " "
-            if len(line) > len(vehicle_id + "="):  # If there is an actual route
-                line = line[:-1] + "\n"  # Remove the last space and add a line break
-                paths.append(line)
+        if len(line) > len(vehicle_id + "="):  # If there is an actual route
+            line = line[:-1] + "\n"  # Remove the last space and add a line break
+            paths.append(line)
     return paths
 
 
@@ -183,7 +183,7 @@ def save_route_dict_to_json_file(route_dict, json_file, close_after=False):
     else:
         file = json_file
 
-    json_obj = json.dumps(dict)
+    json_obj = json.dumps(route_dict)
     file.write(json_obj)
 
     if close_after:
