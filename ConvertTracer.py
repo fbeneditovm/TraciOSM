@@ -5,6 +5,7 @@ import os
 import time
 from statistics import mean
 
+
 class StrToInt:
     """
     Codes each unique string to an int.
@@ -30,60 +31,80 @@ class StrToInt:
             return (self.strSet.index(str_buffer) + 1) * 100
 
 
-MUID_CONTAINS_STRING = True
+def sumo_tracer_to_mobcons(tracerfile):
+    """
+    Converts a sumo generated tracer to a mobcons compatible tracer.
+    Will create mobcons tracer file with the same name as the sumo tracer file, however with the .txt extension.
+    :param tracerfile: the sumo tracer file
+    :return: None
+    """
 
-try:
-    with open(os.path.join("output","ConstBreakLog.txt"), "r") as breakLog:
-        breakLog_lines = breakLog.readlines()
-        now = long(float(breakLog_lines[0]))
-except IOError:
-    now = long(round(time.time() * 1000))
-    # now = 1530615660000 # 8:01
-    # now = 1530625560000 # 10:45
+    # MUID_CONTAINS_STRING = True
 
-tree = ET.parse('ufmaTrace.xml')
-root = tree.getroot()
-i = 0
-lines_arr = []
-str_to_int = StrToInt()  # This will code the string parts of vehicle.id to int
-all_speed_by_kind = {}
-statistics_by_kind = {}
-for timestep in root:
-    timestamp = str(now + int(float(timestep.get('time'))*1000))
-    for vehicle in timestep:
-        # if MUID_CONTAINS_STRING:
-        #     id_parts = str(vehicle.get('id')).split('.')
-        #     muID = id_parts[0]
-        #     muID = str(str_to_int.get_int(muID))
-        #     muID = muID + id_parts[1]
-        # else:
-        #     muID = str(vehicle.get('id'))
+    try:
+        with open(os.path.join("output", "ConstBreakLog.txt"), "r") as breakLog:
+            breakLog_lines = breakLog.readlines()
+            now = long(float(breakLog_lines[0]))
+    except IOError:
+        now = long(round(time.time() * 1000))
+        # now = 1530615660000 # 8:01
+        # now = 1530625560000 # 10:45
 
-        x = str(vehicle.get('x'))
+    tree = ET.parse(tracerfile)
+    root = tree.getroot()
+    i = 0
+    line_list = []
+    str_to_int = StrToInt()  # This will code the string parts of vehicle.id to int
+    all_speed_by_kind = {}
+    statistics_by_kind = {}
 
-        y = str(vehicle.get('y'))
-        kind_of_MU = str(vehicle.get('type'))
-        speed_float = round(float(vehicle.get('speed')) * 3.6, 3)
-        speed = str(speed_float)
-        if kind_of_MU in all_speed_by_kind:
-            all_speed_by_kind[kind_of_MU].append(speed_float)
-        else:
-            all_speed_by_kind[kind_of_MU] = []
-            all_speed_by_kind[kind_of_MU].append(speed_float)
-            statistics_by_kind[kind_of_MU] = {}
+    for timestep in root:
+        timestamp = str(now + int(float(timestep.get('time'))*1000))
+        for vehicle in timestep:
+            # if MUID_CONTAINS_STRING:
+            #     id_parts = str(vehicle.get('id')).split('.')
+            #     mu_id = id_parts[0]
+            #     mu_id = str(str_to_int.get_int(mu_id))
+            #     mu_id = mu_id + id_parts[1]
+            # else:
+            #     mu_id = str(vehicle.get('id'))
 
-for kind in all_speed_by_kind:
-    statistics_by_kind[kind]['total'] = len(all_speed_by_kind[kind])
-    statistics_by_kind[kind]['mean'] = mean(all_speed_by_kind[kind])
-    statistics_by_kind[kind]['max'] = max(all_speed_by_kind[kind])
-    statistics_by_kind[kind]['n_above_40'] = sum(spd > 40 for spd in all_speed_by_kind[kind])
-    statistics_by_kind[kind]['n_above_60'] = sum(spd > 60 for spd in all_speed_by_kind[kind])
-    statistics_by_kind[kind]['n_above_80'] = sum(spd > 80 for spd in all_speed_by_kind[kind])
+            mu_id = str(vehicle.get('id'))
+            x = str(vehicle.get('x'))
+            y = str(vehicle.get('y'))
+            kind_of_mu = str(vehicle.get('type'))
+            speed_float = round(float(vehicle.get('speed')) * 3.6, 3)  # convert m/s to km/s and round to 3 dec. places
+            speed_str = str(speed_float)
 
-for kind in statistics_by_kind:
-    print('Statistics for '+kind+str(statistics_by_kind[kind]))
+            line_list.append(mu_id + ',' + x + ',' + y + ',' + speed_str + ',' + timestamp + ',' + kind_of_mu + '\n')
 
-# fo = open(os.path.join("output","ufmaTrace.txt"), "w")
-# fo.writelines(lines_arr)
+            if kind_of_mu in all_speed_by_kind:
+                all_speed_by_kind[kind_of_mu].append(speed_float)
+            else:
+                all_speed_by_kind[kind_of_mu] = []
+                all_speed_by_kind[kind_of_mu].append(speed_float)
+                statistics_by_kind[kind_of_mu] = {}
 
-# print(lines_arr[:20])
+    for kind in all_speed_by_kind:
+        statistics_by_kind[kind]['total'] = len(all_speed_by_kind[kind])
+        statistics_by_kind[kind]['mean'] = mean(all_speed_by_kind[kind])
+        statistics_by_kind[kind]['max'] = max(all_speed_by_kind[kind])
+        statistics_by_kind[kind]['n_above_40'] = sum(spd > 40 for spd in all_speed_by_kind[kind])
+        statistics_by_kind[kind]['n_above_60'] = sum(spd > 60 for spd in all_speed_by_kind[kind])
+        statistics_by_kind[kind]['n_above_80'] = sum(spd > 80 for spd in all_speed_by_kind[kind])
+
+    for kind in statistics_by_kind:
+        print('Statistics for '+kind+str(statistics_by_kind[kind]))
+
+    with open(tracerfile[-3]+"txt", "w") as mobcons_tracer:
+        mobcons_tracer.writelines(line_list)
+
+    print(line_list[20])
+
+
+def main():
+    """
+    The main function.
+    Will run through the output folder generating mobcons tracer files to all sumo tracer files
+    :return:
+    """

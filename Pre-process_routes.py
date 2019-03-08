@@ -1,7 +1,7 @@
 from __future__ import print_function
 from datetime import datetime
 import os
-import sys
+import json
 import util_methods as util
 
 
@@ -29,7 +29,7 @@ def main():
     # Create a tag with current datetime
     time_tag = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
 
-    mobcons_paths_file = open(os.path.join(os.getcwd(), "output", "mobcons_paths"+time_tag+".txt"), "w")
+    mobcons_paths_file = open(os.path.join(os.getcwd(), "output", "mobcons_constraints" + time_tag + ".json"), "w")
     json_file = open(os.path.join(os.getcwd(), "output", "route_dict" + time_tag + ".json"), "w")
 
     # Set the lists
@@ -43,6 +43,20 @@ def main():
 
     # Save route dict
     util.save_route_dict_to_json_file(route_dict, json_file, True)
+
+    # Test
+    json_file = open(os.path.join(os.getcwd(), "output", "route_dict" + time_tag + ".json"), "r")
+    route_dict2 = util.load_route_dict_from_json_file(json_file, True)
+
+    keys = set(route_dict.keys())
+    if keys != set(route_dict2.keys()):
+        print("Not the same key set")
+    else:
+        print("Same keys!")
+    # I do not test the values because the loaded strings are in unicode
+
+    json_file = open(os.path.join(os.getcwd(), "output", "mobcons_constraints" + time_tag + ".json"), "r")
+    jsonobj = json.loads(json_file.read())
 
 
 if __name__ == '__main__':

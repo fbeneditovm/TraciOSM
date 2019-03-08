@@ -148,7 +148,7 @@ def run_simulation():
     output_dir = os.path.join(os.getcwd(), "output")
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
-    dis_file_name = "[DISTANCE]"+datetime.now().strftime("%Y-%m-%d %H-%M-%S")+".txt"
+    dis_file_name = "[DISTANCE]"+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")+".txt"
     dist_out_file = open(os.path.join(output_dir, dis_file_name), "w")
     while simulation.getMinExpectedNumber() > 0:
         traci.simulationStep()  # Run a simulation step
@@ -161,6 +161,8 @@ def run_simulation():
 if __name__ == "__main__":
     options = get_options()
 
+    output_file = os.path.join(os.getcwd(), "output", "sumo_tracer_"+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")+".xml")
+
     # this script has been called from the command line. It will start sumo as a
     # server, then connect and run
     if options.nogui:
@@ -168,6 +170,7 @@ if __name__ == "__main__":
     else:
         sumoBinary = checkBinary('sumo-gui')
 
-    traci.start([sumoBinary, "-c", "osm.sumocfg"])
+    traci.start([sumoBinary, "-c", "osm2.sumocfg",
+                 "--fcd-output", output_file])
 
     run_simulation()

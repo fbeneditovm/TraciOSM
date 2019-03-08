@@ -155,14 +155,18 @@ def export_route_dict_to_mobcons_path(route_dict=None):
     if route_dict is None:
         route_dict = generate_route_dict()
 
-    paths = []
+    paths = ["{ \"paths\": {\n"]
     for vehicle_id in route_dict:
-        line = vehicle_id+"="
-        for xy in route_dict[vehicle_id]["xy"]:
-            line += str(xy[0]) + "," + str(xy[1]) + " "
-        if len(line) > len(vehicle_id + "="):  # If there is an actual route
-            line = line[:-1] + "\n"  # Remove the last space and add a line break
+        if len(route_dict[vehicle_id]["xy"]) > 0:
+            line = "\"" + vehicle_id + "\": ["
+            for xy in route_dict[vehicle_id]["xy"]:
+                line += "[" + str(xy[0]) + "," + str(xy[1]) + "],"
+
+            line = line[:-1] + "],\n"  # Remove the coma from the last line and closes the vehicle path
             paths.append(line)
+    paths[-1] = paths[-1][:-2]+"\n"  # Remove the coma from the last vehicle path and put the line break back
+    paths.append("}\n}")
+
     return paths
 
 
@@ -185,6 +189,7 @@ def save_route_dict_to_json_file(route_dict, json_file, close_after=False):
 
     json_obj = json.dumps(route_dict)
     file.write(json_obj)
+
 
     if close_after:
         file.close()
@@ -212,3 +217,11 @@ def load_route_dict_from_json_file(json_file, close_after=False):
         file.close()
 
     return route_dict
+
+
+def cleanup_output_folder():
+    import os
+
+    for root, dirs, files in os.walk(os.path.join(os.getcwd(), "output")):
+        for filename in files:
+            os.remove(os.path.join(root, filename))
