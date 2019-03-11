@@ -3,13 +3,9 @@ from __future__ import absolute_import
 import xml.etree.ElementTree as ET
 import sys
 import optparse
-import math
-import time
 from datetime import datetime
 from statistics import mean
 import math
-import subprocess
-import random
 import os
 
 from sumolib import checkBinary
@@ -161,7 +157,7 @@ def run_simulation():
 if __name__ == "__main__":
     options = get_options()
 
-    output_file = os.path.join(os.getcwd(), "output", "sumo_tracer_"+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")+".xml")
+    output_file = os.path.join(os.getcwd(), "output", "tracer_"+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")+".xml")
 
     # this script has been called from the command line. It will start sumo as a
     # server, then connect and run

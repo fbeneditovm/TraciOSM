@@ -96,7 +96,7 @@ def sumo_tracer_to_mobcons(tracerfile):
     for kind in statistics_by_kind:
         print('Statistics for '+kind+str(statistics_by_kind[kind]))
 
-    with open(tracerfile[-3]+"txt", "w") as mobcons_tracer:
+    with open(tracerfile[:-3]+"txt", "w") as mobcons_tracer:
         mobcons_tracer.writelines(line_list)
 
     print(line_list[20])
@@ -106,5 +106,18 @@ def main():
     """
     The main function.
     Will run through the output folder generating mobcons tracer files to all sumo tracer files
-    :return:
+    :return: None
     """
+    import os
+
+    for root, dirs, files in os.walk(os.path.join(os.getcwd(), "output")):
+        for filename in files:
+            # Check for sumo tracers without a respective mobcons tracer
+            if filename.startswith("tracer") and filename.endswith(".xml") \
+               and not os.path.isfile(os.path.join(root, filename[:-3]+"txt")):
+                sumo_tracer_to_mobcons(os.path.join(root, filename))
+
+
+if __name__ == '__main__':
+    main()
+
